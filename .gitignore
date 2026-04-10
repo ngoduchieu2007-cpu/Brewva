@@ -1,0 +1,19 @@
+# Dependencies (none required, but just in case)
+node_modules/
+package-lock.json
+package.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Netlify
+.netlify/
