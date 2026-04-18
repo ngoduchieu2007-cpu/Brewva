@@ -3,7 +3,8 @@
 A small Duolingo-style web app for learning Java from scratch. Built as a static
 site with plain HTML/CSS/JavaScript, no framework and no build step.
 
-Live: https://serene-phoenix-131e99.netlify.app
+Live: [brewva.netlify.app](https://brewva.netlify.app/)
+
 
 ## What's inside
 
