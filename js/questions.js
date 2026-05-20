@@ -28,7 +28,7 @@ function renderQuestion() {
   else if (q.type === 'fill') renderFill(q);
   else if (q.type === 'type') renderType(q);
 
-  $('check-btn').onclick = onCheck;
+  $('check-btn').onclick = () => onCheck();
 }
 
 /* ---------- MC / TF ---------- */
@@ -168,8 +168,33 @@ function checkTypeAnswer(q, userInput) {
   return q.accept.some(a => normCode(a) === u);
 }
 
+// Returns an AI-generated hint string, or null if unavailable.
+// Wired up properly in Commit 2 (Netlify Function). Returns null until then.
+async function getAIHint(q, userCode, lang, runResult) {
+  try {
+    const resp = await fetch('/.netlify/functions/check-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: q.q,
+        code: userCode || '',
+        language: lang || 'java',
+        lesson_title: session.lesson.title,
+        expected: q.accept ? q.accept[0] : (q.expected_output !== undefined ? String(q.expected_output) : ''),
+        run_error: runResult && !runResult.ok ? runResult.error : '',
+        run_output: runResult && runResult.ok ? runResult.output : ''
+      })
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.hint || null;
+  } catch {
+    return null;
+  }
+}
+
 /* ---------- CHECK ANSWER ---------- */
-function onCheck() {
+async function onCheck() {
   const { lesson, qIdx } = session;
   const q = lesson.questions[qIdx];
   let correct = false;
@@ -182,7 +207,16 @@ function onCheck() {
     correct = session.built.length === q.ans.length &&
               session.built.every((t,i) => t === q.ans[i]);
   } else if (q.type === 'type') {
-    correct = checkTypeAnswer(q, session.typed || '');
+    if (q.expected_output !== undefined) {
+      // Python: run code with Pyodide, compare stdout
+      const btn = $('check-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Running…'; }
+      const result = await runPython(session.typed || '', q.test_code || '');
+      session.runResult = result;
+      correct = result.ok && result.output === String(q.expected_output);
+    } else {
+      correct = checkTypeAnswer(q, session.typed || '');
+    }
   }
 
   session.answered = true;
@@ -239,20 +273,45 @@ function showFeedback(correct, q) {
   const cb = $('check-bar');
   if (cb) cb.remove();
 
-  const wrongAns = !correct && q.type === 'build'
-    ? `<p>Correct order: <code>${escapeHtml(q.ans.join(' '))}</code></p>`
-    : (!correct && q.type === 'type'
-        ? `<p>One correct answer: <code>${escapeHtml(q.accept[0])}</code></p>`
-        : '');
+  let wrongAns = '';
+  if (!correct) {
+    if (q.type === 'build') {
+      wrongAns = `<p>Correct order: <code>${escapeHtml(q.ans.join(' '))}</code></p>`;
+    } else if (q.type === 'type') {
+      if (q.expected_output !== undefined) {
+        const r = session.runResult;
+        if (r && !r.ok) {
+          wrongAns = `<p>Your code raised an error:<br><code>${escapeHtml(r.error)}</code></p>`;
+        } else {
+          wrongAns = `<p>Your output: <code>${escapeHtml(r ? r.output : '(none)')}</code><br>Expected: <code>${escapeHtml(String(q.expected_output))}</code></p>`;
+        }
+      } else if (q.accept) {
+        wrongAns = `<p>One correct answer: <code>${escapeHtml(q.accept[0])}</code></p>`;
+      }
+    }
+  }
+
   const fb = el(`
     <div class="feedback ${correct ? '' : 'wrong'}">
       <h3>${correct ? 'Nice!' : 'Not quite!'}</h3>
       <p>${q.why}</p>
       ${wrongAns}
+      ${!correct && q.type === 'type' ? `<p class="ai-hint" id="ai-hint">Getting a hint…</p>` : ''}
       <button class="btn ${correct ? 'btn-primary' : 'btn-danger'} btn-block btn-lg" id="continue-btn">Continue</button>
     </div>
   `);
   document.body.appendChild(fb);
+
+  // Fetch AI hint async — doesn't block the Continue button
+  if (!correct && q.type === 'type') {
+    getAIHint(q, session.typed, session.lang, session.runResult).then(hint => {
+      const hintEl = $('ai-hint');
+      if (!hintEl) return;
+      hintEl.textContent = hint || '';
+      if (!hint) hintEl.style.display = 'none';
+    });
+  }
+
   $('continue-btn').onclick = () => {
     fb.remove();
     advanceQuestion();

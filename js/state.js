@@ -9,7 +9,8 @@ const DEFAULT_STATE = {
   lastDate: null,
   completed: {},     // lessonId → true
   introsSeen: {},    // lessonId → true
-  firstOpen: true
+  firstOpen: true,
+  currentLang: 'java'
 };
 
 let state = loadState();

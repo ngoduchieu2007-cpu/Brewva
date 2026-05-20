@@ -556,7 +556,7 @@
     line-height: 1.4;
   }
   .build-area:empty::before {
-    content: 'Tap tiles below…';
+    content: 'Tap tiles belowâ€¦';
     color: var(--text-faint);
     font-size: 14px;
     font-style: italic;
@@ -768,4 +768,44 @@
     font-size: 13px;
     z-index: 200;
     animation: fade 0.2s ease;
+  }
+
+  /* ============ LANGUAGE SWITCHER ============ */
+  .lang-tabs {
+    display: flex; gap: 8px;
+    margin: 4px 0 8px;
+  }
+  .lang-tab {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background: var(--card);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text-soft);
+    box-shadow: 0 3px 0 0 var(--line);
+    transition: transform 0.06s, box-shadow 0.06s;
+  }
+  .lang-tab:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--line); }
+  .lang-tab.active[data-lang="java"] {
+    background: var(--java); border-color: var(--java-dark);
+    color: white; box-shadow: 0 3px 0 0 var(--java-dark);
+  }
+  .lang-tab.active[data-lang="python"] {
+    background: #3776AB; border-color: #2B5E8E;
+    color: white; box-shadow: 0 3px 0 0 #2B5E8E;
+  }
+
+  /* AI hint shown in feedback bar */
+  .ai-hint {
+    background: rgba(255,255,255,0.5);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 700;
   }

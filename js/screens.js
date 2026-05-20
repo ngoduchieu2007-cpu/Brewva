@@ -19,15 +19,36 @@ function renderWelcome() {
 }
 
 /* ---------- HOME / PATH ---------- */
+function getCurrentUnits() {
+  return state.currentLang === 'python' ? PYTHON_UNITS : UNITS;
+}
+
 function renderHome() {
   const app = $('app');
   app.innerHTML = renderTopbar() + `<div class="screen" id="path-screen"></div>`;
   bindTopbar();
 
   const screen = $('path-screen');
+
+  // Language switcher
+  const tabs = el(`
+    <div class="lang-tabs">
+      <button class="lang-tab ${state.currentLang === 'java' ? 'active' : ''}" data-lang="java">☕ Java</button>
+      <button class="lang-tab ${state.currentLang === 'python' ? 'active' : ''}" data-lang="python">🐍 Python</button>
+    </div>
+  `);
+  tabs.querySelectorAll('.lang-tab').forEach(btn => {
+    btn.onclick = () => {
+      state.currentLang = btn.dataset.lang;
+      saveState();
+      render();
+    };
+  });
+  screen.appendChild(tabs);
+
   let firstUnlocked = true;
 
-  UNITS.forEach((unit, ui) => {
+  getCurrentUnits().forEach((unit) => {
     const banner = el(`
       <div class="unit-banner" style="--unit-color:${unit.color};--unit-shadow:${unit.shadow};">
         <div class="unit-banner-info">
@@ -77,10 +98,10 @@ function renderHome() {
 
 function isLessonUnlocked(unit, lessonIdx) {
   if (lessonIdx === 0) {
-    // first lesson of unit: unlocked if all previous units done OR this is first unit
-    const unitIdx = UNITS.findIndex(u => u.id === unit.id);
+    const units = getCurrentUnits();
+    const unitIdx = units.findIndex(u => u.id === unit.id);
     if (unitIdx === 0) return true;
-    const prevUnit = UNITS[unitIdx - 1];
+    const prevUnit = units[unitIdx - 1];
     return prevUnit.lessons.every(l => state.completed[l.id]);
   }
   const prev = unit.lessons[lessonIdx - 1];
@@ -131,20 +152,25 @@ function openResetModal() {
 
 /* ---------- LESSON SESSION ---------- */
 function startLesson(unitId, lessonId) {
-  const unit = UNITS.find(u => u.id === unitId);
+  const units = getCurrentUnits();
+  const unit = units.find(u => u.id === unitId);
   const lesson = unit.lessons.find(l => l.id === lessonId);
   session = {
     unit, lesson,
+    lang: state.currentLang,
     qIdx: 0,
     correct: 0,
     wrong: 0,
     startTime: Date.now(),
     selected: null,
     built: [],
+    typed: '',
     answered: false,
     wasCorrect: false,
+    runResult: null,
     phase: state.introsSeen[lessonId] ? 'q' : 'intro'
   };
+  if (state.currentLang === 'python') preloadPyodide();
   render();
 }
 function endSession() { session = null; render(); }
