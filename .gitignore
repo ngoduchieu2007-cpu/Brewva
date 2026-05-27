@@ -3,6 +3,9 @@ node_modules/
 package-lock.json
 package.json
 
+# Local env — never commit real keys
+.env
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db
