@@ -3,7 +3,7 @@
 A Duolingo-style app for learning programming from zero. Pick Java or Python,
 work through bite-sized lessons, and write real code directly in the browser.
 
-**Live:** https://serene-phoenix-131e99.netlify.app
+**Live:** https://brewva.netlify.app/
 
 <img width="445" height="361" alt="image" src="https://github.com/user-attachments/assets/ac608dbd-75bb-4149-a7e1-1b30e2016716" />
 
